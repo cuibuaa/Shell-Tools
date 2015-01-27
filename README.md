@@ -11,10 +11,14 @@ st = shell_tools()
 #set your remote PC MAC address here
 mac = 'xx-xx-xx-xx-xx-xx'
 mac = mac.lower()
-#set your local ip and netmask here
-st.cmd_wol(mac, '172.16.8.10', '255.255.255.0')
-#set your local scanning ip range 
-ip = st.cmd_rarp(mac, '172.16.8', 10, 20)
+#get local ip and ip domain
+ip = st.get_localip()
+ip_domain = st.convert_ip2domain(ip)
+#wake on LAN the target PC
+st.cmd_wol(mac, ip, '255.255.255.0')
+#RAPP the target IP
+ip = st.cmd_rarp(mac, ip_domain, 10, 20)
+#Remote connection
 if ip :
     st.cmd_remote(ip)
 else:

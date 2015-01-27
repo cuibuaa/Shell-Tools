@@ -77,6 +77,25 @@ class shell_tools:
         else:
             return None
 
+    def get_localip(self):
+        ret = popen(self.cmd_dic['IP']).read()
+        reg = r'((\d{1,3}\.){3}\d{1,3})'
+        ipre = re.compile(reg)
+        iplist = re.findall(ipre,ret)
+
+        for ip in iplist:
+            if ip[0].find('255') == -1:
+                return ip[0]
+        return None
+
+    def convert_ip2domain(self, ip):
+        ret_ip = ip.split('.')
+        if len(ret_ip) != 4:
+            raise RuntimeError("The IP address format is error")
+        del ret_ip[-1]
+        ret_ip = '.'.join(ret_ip)
+        return ret_ip
+
     def check_idle_ip(self, domain, start = 1, end = 255) :
         #scan the lan first to make sure the ARP cache is flushed
         self.scan_lan(domain, start, end)
@@ -113,10 +132,14 @@ if __name__ == '__main__':
     #set your remote PC MAC address here
     mac = 'xx-xx-xx-xx-xx-xx'
     mac = mac.lower()
-    #set your local ip and netmask here
-    st.cmd_wol(mac, '172.16.8.10', '255.255.255.0')
-    #set your local scanning ip range 
-    ip = st.cmd_rarp(mac, '172.16.8', 10, 20)
+    #get local ip and ip domain
+    ip = st.get_localip()
+    ip_domain = st.convert_ip2domain(ip)
+    #wake on LAN the target PC
+    st.cmd_wol(mac, ip, '255.255.255.0')
+    #RAPP the target IP
+    ip = st.cmd_rarp(mac, ip_domain, 10, 20)
+    #Remote connection
     if ip :
         st.cmd_remote(ip)
     else:
